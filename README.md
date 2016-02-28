@@ -14,3 +14,5 @@ The process this script automates is as follows (after offering to install any o
 4. Rezip the .epub with [7Zip](https://chocolatey.org/packages/7zip.commandline)
 5. Convert to .mobi with [kindlegen](https://chocolatey.org/packages/kindlegen)
 6. Remove the .epub from the .mobi with [kindlestrip](https://github.com/jefftriplett/kindlestrip)
+
+All workings happen in a folder called 'output' which the script creates.

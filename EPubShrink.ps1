@@ -1,3 +1,8 @@
+#*********************************************************************#
+#***	This software is in the public domain, furnished "as is",  ***#
+#***	without technical support, and with no warranty, express   ***#
+#***	or implied, as to its usefulness for any purpose.		   ***#
+#*********************************************************************#
 
 param(
     [string] $inFilename = '',
@@ -17,6 +22,8 @@ $arrDependancies = @(
 $bChocoNeeded = $FALSE;
 $bPipNeeded = $FALSE;
 $sMissingPackages =  '';
+
+$filetitle = Get-ChildItem $inFilename | % {$_.BaseName};
 
 #
 # Ensure all commands exist
@@ -47,8 +54,12 @@ foreach ($dependancy in $arrDependancies)
 		else
 		{
 			$bChocoNeeded = $TRUE;
-			$sMissingPackages = $sMissingPackages + ' ' + $package;
+			$sMissingPackages = $sMissingPackages + ';' + $package;
 		}
+	}
+	elseif ($package -eq 'chocolately')
+	{
+		$bChocoNeeded = $FALSE;
 	}
 }
 
@@ -58,7 +69,9 @@ foreach ($dependancy in $arrDependancies)
 
 if ( ($sMissingPackages -ne '') -or $bPipNeeded -or $bChocoNeeded )
 {
+	#
 	# Ensure we have permission to install stuff
+	#
 
 	if ($bInstallPrompt)
 	{
@@ -75,7 +88,9 @@ if ( ($sMissingPackages -ne '') -or $bPipNeeded -or $bChocoNeeded )
 		}
 	}
 
+	#
 	# Ensure we have admin rights to install stuff
+	#
 
 	if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator"))
 	{
@@ -95,5 +110,95 @@ if ( ($sMissingPackages -ne '') -or $bPipNeeded -or $bChocoNeeded )
 		Exit;
 	}
 
+	#
+	# Install Chocolately, if required
+	#
+
+	if ($bChocoNeeded)
+	{
+		iex ((new-object net.webclient).DownloadString('https://chocolatey.org/install.ps1'));
+	}
+
+	#
+	# Install any Chocolately packages required
+	#
+	if ($sMissingPackages.Length)
+	{
+		choco install --force $sMissingPackages
+	}
+
+	#
+	# Install kindlestrip, if required
+	#
+	if ($bPipNeeded)
+	{
+		pip install kindlestrip 
+	}
 }
+
+#
+# The real work of this script starts here!
+# (now all our required dependancies are in place)
+#
+
+$maxQuality = [math]::min(100, [math]::max(1, $quality));
+$minQuality = [math]::max(1, $maxQuality - 10);
+$qualityRange = '' + $minQuality + '-' + $maxQuality;
+
+#
+# Remove any existing 'output' directory
+#
+
+if (Get-Item output -errorAction SilentlyContinue)
+{
+	Remove-Item output -recurse -force;
+
+	if (Get-Item output -errorAction SilentlyContinue)
+	{
+		Exit;
+	}
+}
+
+#
+# 1. Unzip the .epub with 7Zip
+#
+
+7z x $inFilename -ooutput/archive
+
+if (-not (Get-Item output -errorAction SilentlyContinue))
+{
+	Exit;
+}
+
+#
+# 2. Shrink any .jpeg files with jpegoptim
+#
+
+foreach($filename in (Get-ChildItem output/archive/OEBPS/Images/*.jpg))
+{
+	jpegoptim --max=$maxQuality $filename
+}
+
+#
+# 3. Shrink any .png files with pngquant
+#
+pngquant --verbose --ext .png --force --quality $qualityRange output/archive/OEBPS/Images/*.png
+
+#
+# 4. Rezip the .epub with 7Zip
+#
+
+7z a -tzip output/$filetitle.epub output/archive
+
+#
+# 5. Convert to .mobi with kindlegen
+#
+
+kindlegen output/$filetitle.epub
+
+#
+# 6. Remove the .epub from the .mobi with kindlestrip
+#
+
+kindlestrip output/$filetitle.mobi output/$filetitle.mobi
 

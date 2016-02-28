@@ -4,7 +4,7 @@ Script for .epub shrinkage and .mobi conversion.
 Runs on Windows and uses lossy compression. (for lossless compression try [Leanify](https://chocolatey.org/packages/leanify))
 
 Usage:
-`powershell ./EPubShrink.ps1 filename.mobi -quality 50`
+`powershell ./EPubShrink.ps1 filename.epub -quality 50`
 
 The process this script automates is as follows (after offering to install any of the listed dependancies which are not present):
 

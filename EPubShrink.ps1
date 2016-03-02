@@ -11,12 +11,12 @@ param(
 
 $arrDependancies = @(
     @('7z',          '7zip.commandline'),
-	@('jpegoptim',   'jpegoptim'),
-	@('pngquant',    'pngquant'),
-	@('kindlegen',   'kindlegen'),
-	@('kindlestrip', 'kindlestrip'),
-	@('pip',         'pip'),
-	@('choco',       'chocolately')
+    @('jpegoptim',   'jpegoptim'),
+    @('pngquant',    'pngquant'),
+    @('kindlegen',   'kindlegen'),
+    @('kindlestrip', 'kindlestrip'),
+    @('pip',         'pip'),
+    @('choco',       'chocolately')
 );
 
 $bChocoNeeded = $FALSE;
@@ -31,36 +31,36 @@ $filetitle = Get-ChildItem $inFilename | % {$_.BaseName};
 foreach ($dependancy in $arrDependancies)
 {
     $cmd = $dependancy[0];
-	$package = $dependancy[1];
+    $package = $dependancy[1];
 
-	if ( ($package -eq 'chocolately') -and ($bChocoNeeded -eq $FALSE) )
-	{
-		continue;
-	}
+    if ( ($package -eq 'chocolately') -and ($bChocoNeeded -eq $FALSE) )
+    {
+        continue;
+    }
 
-	if ( ($package -eq 'pip') -and ($bPipNeeded -eq $FALSE) )
-	{
-		continue;
-	}
+    if ( ($package -eq 'pip') -and ($bPipNeeded -eq $FALSE) )
+    {
+        continue;
+    }
 
-	if (!(Get-Command $cmd -errorAction SilentlyContinue))
-	{
-		Write-Host ("Command '$cmd' not found (package '$package' needed)");
+    if (!(Get-Command $cmd -errorAction SilentlyContinue))
+    {
+        Write-Host ("Command '$cmd' not found (package '$package' needed)");
 
-		if ($package -eq 'kindlestrip')
-		{
-			$bPipNeeded = $TRUE;
-		}
-		else
-		{
-			$bChocoNeeded = $TRUE;
-			$sMissingPackages = $sMissingPackages + ';' + $package;
-		}
-	}
-	elseif ($package -eq 'chocolately')
-	{
-		$bChocoNeeded = $FALSE;
-	}
+        if ($package -eq 'kindlestrip')
+        {
+            $bPipNeeded = $TRUE;
+        }
+        else
+        {
+            $bChocoNeeded = $TRUE;
+            $sMissingPackages = $sMissingPackages + ';' + $package;
+        }
+    }
+    elseif ($package -eq 'chocolately')
+    {
+        $bChocoNeeded = $FALSE;
+    }
 }
 
 #
@@ -69,71 +69,71 @@ foreach ($dependancy in $arrDependancies)
 
 if ( ($sMissingPackages -ne '') -or $bPipNeeded -or $bChocoNeeded )
 {
-	#
-	# Ensure we have permission to install stuff
-	#
+    #
+    # Ensure we have permission to install stuff
+    #
 
-	if ($bInstallPrompt)
-	{
-		$confirmation = '';
+    if ($bInstallPrompt)
+    {
+        $confirmation = '';
 
-		while ($confirmation -ne 'y')
-		{
-			if ($confirmation -eq 'n')
-			{
-				Exit;
-			}
+        while ($confirmation -ne 'y')
+        {
+            if ($confirmation -eq 'n')
+            {
+                Exit;
+            }
 
-			$confirmation = Read-Host('Install all above named packages and continue? [y/n]');
-		}
-	}
+            $confirmation = Read-Host('Install all above named packages and continue? [y/n]');
+        }
+    }
 
-	#
-	# Ensure we have admin rights to install stuff
-	#
+    #
+    # Ensure we have admin rights to install stuff
+    #
 
-	if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator"))
-	{
-		$newProcess = new-object System.Diagnostics.ProcessStartInfo;
-		$newProcess.Filename = $PsHome + '\PowerShell.exe';
+    if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator"))
+    {
+        $newProcess = new-object System.Diagnostics.ProcessStartInfo;
+        $newProcess.Filename = $PsHome + '\PowerShell.exe';
 
-		$newProcess.Arguments = ' -ExecutionPolicy unrestricted '            +
-								$myInvocation.MyCommand.Definition           +
-								' -inFilename {' + [string]$inFilename + '}' +
-								' -quality ' + [int]$quality                 +
-								' -bInstallPrompt $FALSE'                    ;
+        $newProcess.Arguments = ' -ExecutionPolicy unrestricted '            +
+                                $myInvocation.MyCommand.Definition           +
+                                ' -inFilename {' + [string]$inFilename + '}' +
+                                ' -quality ' + [int]$quality                 +
+                                ' -bInstallPrompt $FALSE'                    ;
 
-		$newProcess.Verb = "runas";
+        $newProcess.Verb = "runas";
 
-		$p = [System.Diagnostics.Process]::Start($newProcess);
+        $p = [System.Diagnostics.Process]::Start($newProcess);
 
-		Exit;
-	}
+        Exit;
+    }
 
-	#
-	# Install Chocolately, if required
-	#
+    #
+    # Install Chocolately, if required
+    #
 
-	if ($bChocoNeeded)
-	{
-		iex ((new-object net.webclient).DownloadString('https://chocolatey.org/install.ps1'));
-	}
+    if ($bChocoNeeded)
+    {
+        iex ((new-object net.webclient).DownloadString('https://chocolatey.org/install.ps1'));
+    }
 
-	#
-	# Install any Chocolately packages required
-	#
-	if ($sMissingPackages.Length)
-	{
-		choco install --force $sMissingPackages
-	}
+    #
+    # Install any Chocolately packages required
+    #
+    if ($sMissingPackages.Length)
+    {
+        choco install --force $sMissingPackages
+    }
 
-	#
-	# Install kindlestrip, if required
-	#
-	if ($bPipNeeded)
-	{
-		pip install kindlestrip 
-	}
+    #
+    # Install kindlestrip, if required
+    #
+    if ($bPipNeeded)
+    {
+        pip install kindlestrip 
+    }
 }
 
 #
@@ -151,12 +151,12 @@ $qualityRange = '' + $minQuality + '-' + $maxQuality;
 
 if (Get-Item output -errorAction SilentlyContinue)
 {
-	Remove-Item output -recurse -force;
+    Remove-Item output -recurse -force;
 
-	if (Get-Item output -errorAction SilentlyContinue)
-	{
-		Exit;
-	}
+    if (Get-Item output -errorAction SilentlyContinue)
+    {
+        Exit;
+    }
 }
 
 #
@@ -167,7 +167,7 @@ if (Get-Item output -errorAction SilentlyContinue)
 
 if (-not (Get-Item output -errorAction SilentlyContinue))
 {
-	Exit;
+    Exit;
 }
 
 #
@@ -176,7 +176,7 @@ if (-not (Get-Item output -errorAction SilentlyContinue))
 
 foreach($filename in (Get-ChildItem output/archive/OEBPS/Images/*.jpg))
 {
-	jpegoptim --max=$maxQuality $filename
+    jpegoptim --max=$maxQuality $filename
 }
 
 #
